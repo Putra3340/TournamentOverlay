@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overlay Control Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Hide scrollbar for all browsers while keeping scroll functionality */
+        html {
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE and Edge */
+        }
+
+        html::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Safari, Opera */
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f23;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 1920px;
+            overflow-x: hidden;
+        }
+
+        /* Preview Frame Container */
+        .preview-frame {
+            position: relative;
+            width: 1920px;
+            height: 1080px;
+            background: #1a1a2e;
+            border: 2px solid #3a3a5a;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .overlay {
+            position: absolute;
+            /* already absolute on the frame */
+            overflow: hidden;
+            transition:
+                transform 0.5s ease,
+                left 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+                top 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+                width 0.6s ease,
+                height 0.6s ease;
+        }
+
+        /* Label is absolute INSIDE the overlay */
+        .overlay-label {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            padding: 4px 10px;
+            font-size: 32px;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.65);
+            color: white;
+            border-radius: 6px;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .overlay-label-left {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            padding: 4px 10px;
+            font-size: 32px;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.65);
+            color: white;
+            border-radius: 6px;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .overlay-label-upleft {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 4px 10px;
+            font-size: 32px;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.65);
+            color: white;
+            border-radius: 6px;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .overlay:hover {
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+        }
+
+        .overlay-1 {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.4) 0%, rgba(75, 0, 130, 0.4) 100%);
+        }
+
+        .overlay-2 {
+            background: linear-gradient(135deg, rgba(30, 144, 255, 0.4) 0%, rgba(0, 191, 255, 0.4) 100%);
+        }
+
+        .overlay-3 {
+            background: linear-gradient(135deg, rgba(255, 20, 147, 0.4) 0%, rgba(255, 105, 180, 0.4) 100%);
+        }
+
+        .overlay-4 {
+            background: linear-gradient(135deg, rgba(50, 205, 50, 0.4) 0%, rgba(34, 139, 34, 0.4) 100%);
+        }
+
+        /* YouTube embed */
+        .overlay-video {
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 1;
+        }
+
+        /* Control Panel Container */
+        .control-panel-frame {
+            width: 1920px;
+            min-height: 400px;
+            background: linear-gradient(135deg, #1e1e3f 0%, #2a2a4a 100%);
+            border: 2px solid #3a3a5a;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .control-panel-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #ffffff;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .global-controls {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .global-controls label {
+            font-size: 14px;
+            color: #b0b0c0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        input[type="color"] {
+            width: 100px;
+            height: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        input[type="color"]:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .controls-grid-large {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .controls-grid-main {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .overlay-control {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .overlay-control:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .overlay-control h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #fff;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 5px;
+            color: #b0b0c0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .control-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        input[type="number"]:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        input[type="text"]:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .apply-button-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .apply-button {
+            padding: 14px 50px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            background-color: #1e1e1e;
+            /* nearly black, smooth dark tone */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            margin-left: 20px;
+        }
+
+        .apply-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .apply-button:active {
+            transform: translateY(0);
+        }
+
+        .reset-button {
+            padding: 14px 50px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            background-color: #1e1e1e;
+            /* nearly black, smooth dark tone */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            margin-left: 20px;
+        }
+
+        .reset-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8);
+            background-color: #2c2c2c;
+            /* slightly lighter on hover */
+        }
+
+        .reset-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+        }
+
+
+        /* Responsive hint */
+        .scale-hint {
+            font-size: 11px;
+            color: #808090;
+            margin-top: 3px;
+        }
+
+        /* Marquee container */
+        .marquee-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 48px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 20;
+            overflow: hidden;
+            border-top: 2px solid #6b7280;
+        }
+
+        .marquee-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .marquee-text {
+            position: absolute;
+            white-space: nowrap;
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            animation: marquee 20s linear infinite;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(175%);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* Commentator and Logo Overlays */
+        .commentator-overlay {
+            position: absolute;
+            background: linear-gradient(135deg, rgba(30, 30, 60, 0.9) 0%, rgba(20, 20, 40, 0.9) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 12px 24px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+
+        .commentator-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+            margin: 0;
+        }
+
+        .commentator-label {
+            font-size: 12px;
+            color: #b0b0c0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .logo-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            background: transparent;
+            border-radius: 50%;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+
+
+        /* Positioning */
+        #commentator1 {
+            top: 20px;
+            left: 20px;
+        }
+
+        #commentator2 {
+            top: 20px;
+            right: 20px;
+        }
+
+        #communityLogo {
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 100px;
+        }
+
+        #gameLogo {
+            top: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 80px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <!-- Preview Frame Container (1920x1080) -->
+        <div class="preview-frame" id="previewFrame">
+            <div class="overlay overlay-1" id="overlay1">
+                <div class="overlay-label-left" id="overlay1-label"><span id="name1">Overlay 1</span><br>HIT : <span
+                        id="hit1">67</span>
+                </div>
+                <div id="player-1" style="width: 100%; height: 100%;"></div>
+            </div>
+
+            <div class="overlay overlay-2" id="overlay2">
+                <div class="overlay-label" id="overlay2-label"><span id="name2">Overlay 2</span><br>HIT : <span
+                        id="hit2">67</span></div>
+                <div id="player-2" style="width: 100%; height: 100%;"></div>
+            </div>
+
+            <div class="overlay overlay-3" id="overlay3">
+                <div class="overlay-label-left" id="overlay3-label"><span id="name3">Overlay 3</span><br>HIT : <span
+                        id="hit3">67</span>
+                </div>
+                <div id="player-3" style="width: 100%; height: 100%;"></div>
+            </div>
+
+            <div class="overlay overlay-4" id="overlay4">
+                <div class="overlay-label" id="overlay4-label"><span id="name4">Overlay 4</span><br>HIT : <span
+                        id="hit4">67</span></div>
+                <div id="player-4" style="width: 100%; height: 100%;"></div>
+            </div>
+
+
+            <!-- Commentator Overlays -->
+            <div class="commentator-overlay" id="commentator1">
+                <div class="commentator-label">Commentator 1</div>
+                <p class="commentator-name" id="commentator1-name">John Doe</p>
+            </div>
+
+            <div class="commentator-overlay" id="commentator2">
+                <div class="commentator-label">Commentator 2</div>
+                <p class="commentator-name" id="commentator2-name">Jane Smith</p>
+            </div>
+
+            <div class="logo-overlay center-logo">
+                <img src="./IHC_Bulat.png" alt="IHC LOGO" class="logo-image">
+            </div>
+
+
+            <!-- Marquee Text -->
+            <div class="marquee-container">
+                <div class="marquee-wrapper">
+                    <div class="marquee-text">Jangan Lupa Like, Comment dan Follow supaya IHC ada event-event yang
+                        menarik kedepannya | Indonesian Hitless Community</div>
+                </div>
+            </div>
+        </div>
+        <!-- Control Panel Container (1920x1080) -->
+        <div class="control-panel-frame">
+            <h2 class="control-panel-title">Overlay Control Panel</h2>
+
+            <!-- Global Controls -->
+            <div class="controls-grid-main">
+                <button id="btn-focus1" class="reset-button" onclick="resetToFocus1()">Fokus 1</button>
+                <button id="btn-focus2" class="reset-button" onclick="resetToFocus2()">Fokus 2</button>
+                <button id="btn-focus3" class="reset-button" onclick="resetToFocus3()">Fokus 3</button>
+                <button id="btn-focus4" class="reset-button" onclick="resetToFocus4()">Fokus 4</button>
+                <button id="btn-tambahhit1" class="reset-button" onclick="tambahhit1()">Tambah 1</button>
+                <button id="btn-tambahhit2" class="reset-button" onclick="tambahhit2()">Tambah 2</button>
+                <button id="btn-tambahhit3" class="reset-button" onclick="tambahhit3()">Tambah 3</button>
+                <button id="btn-tambahhit4" class="reset-button" onclick="tambahhit4()">Tambah 4</button>
+                <button id="btn-kuranghit1" class="reset-button" onclick="kuranghit1()">Kurang 1</button>
+                <button id="btn-kuranghit2" class="reset-button" onclick="kuranghit2()">Kurang 2</button>
+                <button id="btn-kuranghit3" class="reset-button" onclick="kuranghit3()">Kurang 3</button>
+                <button id="btn-kuranghit4" class="reset-button" onclick="kuranghit4()">Kurang 4</button>
+                <button id="btn-reload1" class="reset-button" onclick="reload1()">Reload 1</button>
+                <button id="btn-reload2" class="reset-button" onclick="reload2()">Reload 2</button>
+                <button id="btn-reload3" class="reset-button" onclick="reload3()">Reload 3</button>
+                <button id="btn-reload4" class="reset-button" onclick="reload4()">Reload 4</button>
+                <button class="reset-button" onclick="resetToNormalState()">Normal State</button>
+
+            </div>
+            <div class="controls-grid-large">
+                <div class="overlay-control">
+                    <h3>Main Container</h3>
+                    <div class="control-group">
+                        <div class="control-row">
+                            <div class="input-wrapper">
+                                <label for="bg-image">Main Container Background:</label>
+                                <input type="file" id="bg-image" accept="image/*">
+                                <button class="apply-button" style="padding: 10px 30px; font-size: 14px;"
+                                    onclick="applyBackgroundImage()">Apply BG</button>
+                            </div>
+                            <div class="input-wrapper">
+                                <label for="main-logo-file">Main Logo:</label>
+                                <input type="file" id="main-logo-file" accept="image/*">
+                                <button class="apply-button" style="padding: 10px 30px; font-size: 14px;"
+                                    onclick="applyMainLogo()">Apply Logo</button>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="control-group">
+                        <label>Comentator Name</label>
+                        <div class="control-row">
+                            <div class="input-wrapper">
+                                <input type="text" id="commentator1-input" placeholder="Comentator 1"
+                                    value="Budi Siregar">
+                            </div>
+                            <div class="input-wrapper">
+                                <input type="text" id="commentator2-input" placeholder="Comentator 2" value="Joe Mama">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Marquee Text</label>
+                        <input type="text" id="marquee-text-input" placeholder="Marquee Text"
+                            value="Jangan Lupa Like, Comment dan Follow supaya IHC ada event-event yang menarik kedepannya | Indonesian Hitless Community">
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-grid">
+                <!-- Overlay 1 Controls -->
+                <div class="overlay-control">
+                    <h3>Overlay 1</h3>
+                    <div class="control-group">
+                        <label>Runner Name</label>
+                        <div class="control-row">
+                            <div class="input-wrapper">
+                                <input type="text" id="runner1-input" placeholder="Runner 1" value="Budi Siregar">
+                                <div class="scale-hint">Nama Runner</div>
+                            </div>
+                            <div class="input-wrapper">
+                                <input type="number" id="runner1-score" placeholder="Runner 1 Score" value="0">
+                                <div class="scale-hint">Jumlah Hit</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Url Youtube</label>
+                        <input type="text" id="runner1-youtube-url" placeholder="Url Youtube"
+                            value="https://www.youtube.com/watch?v=rRzxEiBLQCA">
+                        <div class="scale-hint">Url Youtube</div>
+                    </div>
+                    <div class="control-group">
+                        <label>Position</label>
+                        <div class="control-row">
+                            <div class="input-wrapper">
+                                <input type="number" id="overlay1-x" placeholder="X (px)" value="145">
+                            </div>
+                            <div class="input-wrapper">
+                                <input type="number" id="overlay1-y" placeholder="Y (px)" value="65">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Width (px)</label>
+                        <input type="number" id="overlay1-width" placeholder="Width" value="800">
+                        <div class="scale-hint">Height auto-calculated (16:9 ratio)</div>
+                    </div>
+                    <div class="control-group">
+                        <label>Scale</label>
+                        <input type="number" id="overlay1-scale" placeholder="Scale" value="1.0" step="0.1" min="0.1">
+                        <div class="scale-hint">1.0 = 100%, 0.5 = 50%, 2.0 = 200%</div>
+                    </div>
+                    <div class="control-group">
+                        <label>Z-Index</label>
+                        <input type="number" id="overlay1-z-index" placeholder="Z-Index" value="1">
+                    </div>
+                </div>
+
+                <!-- Overlay 2 Controls -->
+                <div class="overlay-control">
+                    <h3>Overlay 2</h3>
+                    <div class="control-group">
+                        <label>Runner Name</label>
+                        <div class="control-row">
+                            <div class="input-wrapper">
+                                <input type="text" id="runner2-input" placeholder="Runner 2" value="Budi Siregar">
+                                <div class="scale-hint">Nama Runner</div>
+                            </div>
+                            <div class="input-wrapper">
+                                <input type="number" id="runner2-score" placeholder="Runner 2 Score" value="0">
+                                <div class="scale-hint">Jumlah Hit</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Url Youtube</label>
+                        <input type="text" id="runner2-youtube-url" placeholder="Url Youtube"
+                            value="https://www.youtube.com/watch?v=rRzxEiBLQCA">
+                        <div class="scale-hint">Url Youtube</div>
+                    </div>
+                    <div class="control-group">
+                        <label>Position</label>
+                        <div class="control-row">
+                            <div class="input-wrapper">
+                                <input type="number" id="overlay2-x" placeholder="X (px)" value="975">
+                            </div>
+                            <div class="input-wrapper">
+                                <input type="number" id="overlay2-y" placeholder="Y (px)" value="65">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Width (px)</label>
+                        <input type="number" id="overlay2-width" placeholder="Width" value="800">
+                        <div class="scale-hint">Height auto-calculated (16:9 ratio)</div>
+                    </div>
+                    <div class="control-group">
+                        <label>Scale</label>
+                        <input type="number" id="overlay2-scale" placeholder="Scale" value="1.0" step="0.1" min="0.1">
+                        <div class="scale-hint">1.0 = 100%, 0.5 = 50%, 2.0 = 200%</div>
+                    </div>
+                    <div class="control-group">
+                        <label>Z-Index</label>
+                        <input type="number" id="overlay2-z-index" placeholder="Z-Index" value="2">
+                    </div>
+                </div>
+
+                <!-- Overlay 3 Controls -->
+                <div class="overlay-control">
+                    <h3>Overlay 3</h3>
+                    <div class="control-group">
+                        <label>Runner Name</label>
+                        <div class="control-row">
+                            <div class="input-wrapper">
+                                <input type="text" id="runner3-input" placeholder="Runner 3" value="Budi Siregar">
+                                <div class="scale-hint">Nama Runner</div>
+                            </div>
+                            <div class="input-wrapper">
+                                <input type="number" id="runner3-score" placeholder="Runner 3 Score" value="0">
+                                <div class="scale-hint">Jumlah Hit</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Url Youtube</label>
+                        <input type="text" id="runner3-youtube-url" placeholder="Url Youtube"
+                            value="https://www.youtube.com/watch?v=rRzxEiBLQCA">
+                        <div class="scale-hint">Url Youtube</div>
+                    </div>
+                    <div class="control-group">
+                        <label>Position</label>
+                        <div class="control-row">
+                            <div class="input-wrapper">
+                                <input type="number" id="overlay3-x" placeholder="X (px)" value="145">
+                            </div>
+                            <div class="input-wrapper">
+                                <input type="number" id="overlay3-y" placeholder="Y (px)" value="540">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Width (px)</label>
+                        <input type="number" id="overlay3-width" placeholder="Width" value="800">
+                        <div class="scale-hint">Height auto-calculated (16:9 ratio)</div>
+                    </div>
+                    <div class="control-group">
+                        <label>Scale</label>
+                        <input type="number" id="overlay3-scale" placeholder="Scale" value="1.0" step="0.1" min="0.1">
+                        <div class="scale-hint">1.0 = 100%, 0.5 = 50%, 2.0 = 200%</div>
+                    </div>
+                    <div class="control-group">
+                        <label>Z-Index</label>
+                        <input type="number" id="overlay3-z-index" placeholder="Z-Index" value="3">
+                    </div>
+                </div>
+
+                <!-- Overlay 4 Controls -->
+                <div class="overlay-control">
+                    <h3>Overlay 4</h3>
+                    <div class="control-group">
+                        <label>Runner Name</label>
+                        <div class="control-row">
+                            <div class="input-wrapper">
+                                <input type="text" id="runner4-input" placeholder="Runner 4" value="Budi Siregar">
+                                <div class="scale-hint">Nama Runner</div>
+                            </div>
+                            <div class="input-wrapper">
+                                <input type="number" id="runner4-score" placeholder="Runner 4 Score" value="0">
+                                <div class="scale-hint">Jumlah Hit</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Url Youtube</label>
+                        <input type="text" id="runner4-youtube-url" placeholder="Url Youtube"
+                            value="https://www.youtube.com/watch?v=rRzxEiBLQCA">
+                        <div class="scale-hint">Url Youtube</div>
+                    </div>
+                    <div class="control-group">
+                        <label>Position</label>
+                        <div class="control-row">
+                            <div class="input-wrapper">
+                                <input type="number" id="overlay4-x" placeholder="X (px)" value="975">
+                            </div>
+                            <div class="input-wrapper">
+                                <input type="number" id="overlay4-y" placeholder="Y (px)" value="540">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Width (px)</label>
+                        <input type="number" id="overlay4-width" placeholder="Width" value="800">
+                        <div class="scale-hint">Height auto-calculated (16:9 ratio)</div>
+                    </div>
+                    <div class="control-group">
+                        <label>Scale</label>
+                        <input type="number" id="overlay4-scale" placeholder="Scale" value="1.0" step="0.1" min="0.1">
+                        <div class="scale-hint">1.0 = 100%, 0.5 = 50%, 2.0 = 200%</div>
+                    </div>
+                    <div class="control-group">
+                        <label>Z-Index</label>
+                        <input type="number" id="overlay4-z-index" placeholder="Z-Index" value="4">
+                    </div>
+                </div>
+            </div>
+            <!-- Apply Button -->
+            <div class="apply-button-container">
+                <button class="apply-button" onclick="applyChanges()">Apply Changes</button>
+                <button class="reset-button" onclick="resetToDefault()">Reset All</button>
+            </div>
+        </div>
+
+    </div>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        let player1;
+        let player2;
+        let player3;
+        let player4;
+
+        let player1videoid = "rRzxEiBLQCA";
+        let player2videoid = "rRzxEiBLQCA";
+        let player3videoid = "rRzxEiBLQCA";
+        let player4videoid = "rRzxEiBLQCA";
+
+        function onYouTubeIframeAPIReady() {
+            player1 = new YT.Player('player-1', {
+                videoId: player1videoid,
+                playerVars: {
+                    autoplay: 1,
+                    mute: 1,
+                    playsinline: 1
+                },
+                events: {
+                    onReady: () => player1.playVideo()
+                }
+            });
+            player2 = new YT.Player('player-2', {
+                videoId: player2videoid,
+                playerVars: {
+                    autoplay: 1,
+                    mute: 1,
+                    playsinline: 1
+                },
+                events: {
+                    onReady: () => player2.playVideo()
+                }
+            });
+            player3 = new YT.Player('player-3', {
+                videoId: player3videoid,
+                playerVars: {
+                    autoplay: 1,
+                    mute: 1,
+                    playsinline: 1
+                },
+                events: {
+                    onReady: () => player3.playVideo()
+                }
+            });
+            player4 = new YT.Player('player-4', {
+                videoId: player4videoid,
+                playerVars: {
+                    autoplay: 1,
+                    mute: 1,
+                    playsinline: 1
+                },
+                events: {
+                    onReady: () => player4.playVideo()
+                }
+            });
+        }
+
+    </script>
+    <script>
+        // Default configurations
+        const defaultConfigs = {
+            overlay1: { x: 145, y: 65, width: 800, scale: 1.0, zIndex: 1 },
+            overlay2: { x: 975, y: 65, width: 800, scale: 1.0, zIndex: 2 },
+            overlay3: { x: 145, y: 540, width: 800, scale: 1.0, zIndex: 3 },
+            overlay4: { x: 975, y: 540, width: 800, scale: 1.0, zIndex: 4 }
+        };
+        const focus1 = {
+            overlay1: { x: 145, y: 65, width: 800, scale: 2.0, zIndex: 1 },
+            overlay2: { x: 160, y: 680, width: 800, scale: 0.6, zIndex: 2 },
+            overlay3: { x: 700, y: 680, width: 800, scale: 0.6, zIndex: 3 },
+            overlay4: { x: 1250, y: 680, width: 800, scale: 0.6, zIndex: 4 }
+        };
+        const focus2 = {
+            overlay1: { x: 160, y: 680, width: 800, scale: 0.6, zIndex: 2 },
+            overlay2: { x: 145, y: 65, width: 800, scale: 2.0, zIndex: 1 },
+            overlay3: { x: 700, y: 680, width: 800, scale: 0.6, zIndex: 3 },
+            overlay4: { x: 1250, y: 680, width: 800, scale: 0.6, zIndex: 4 }
+        };
+        const focus3 = {
+            overlay1: { x: 160, y: 680, width: 800, scale: 0.6, zIndex: 3 },
+            overlay2: { x: 1250, y: 680, width: 800, scale: 0.6, zIndex: 2 },
+            overlay3: { x: 145, y: 65, width: 800, scale: 2.0, zIndex: 1 },
+            overlay4: { x: 700, y: 680, width: 800, scale: 0.6, zIndex: 4 }
+        }
+        const focus4 = {
+            overlay1: { x: 160, y: 680, width: 800, scale: 0.6, zIndex: 4 },
+            overlay2: { x: 1250, y: 680, width: 800, scale: 0.6, zIndex: 3 },
+            overlay3: { x: 700, y: 680, width: 800, scale: 0.6, zIndex: 2 },
+            overlay4: { x: 145, y: 65, width: 800, scale: 2.0, zIndex: 1 }
+        }
+
+        // Apply background color to main container
+        function applyBackgroundImage() {
+            const fileInput = document.getElementById('bg-image');
+            const file = fileInput.files[0]; // get the selected file
+            const previewFrame = document.getElementById('previewFrame');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewFrame.style.background = `url(${e.target.result})`;
+                    previewFrame.style.backgroundSize = "cover";
+                    previewFrame.style.backgroundPosition = "center";
+                    previewFrame.style.backgroundRepeat = "no-repeat";
+                };
+                reader.readAsDataURL(file); // convert file to base64 URL
+            } else {
+                alert("Please select an image first!");
+            }
+        }
+
+        // Apply changes to overlays
+        function applyChanges() {
+            for (let i = 1; i <= 4; i++) {
+                const overlayId = `overlay${i}`;
+                const overlay = document.getElementById(overlayId);
+
+                const x = parseFloat(document.getElementById(`${overlayId}-x`).value) || 0;
+                const y = parseFloat(document.getElementById(`${overlayId}-y`).value) || 0;
+                const width = parseFloat(document.getElementById(`${overlayId}-width`).value) || 400;
+                const scale = parseFloat(document.getElementById(`${overlayId}-scale`).value) || 1.0;
+                const zIndex = parseFloat(document.getElementById(`${overlayId}-z-index`).value) || 1;
+                const runnerName = document.getElementById(`runner${i}-input`).value;
+                const runnerScore = document.getElementById(`runner${i}-score`).value;
+                const runnerYtUrl = document.getElementById(`runner${i}-youtube-url`).value;
+                const videoId = runnerYtUrl.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1];
+
+                const height = width / (16 / 9);
+
+                // RUNNER NAME
+                document.getElementById(`name${i}`).innerText = runnerName;
+
+                // RUNNER SCORE
+                document.getElementById(`hit${i}`).innerText = runnerScore;
+
+                // RUNNER YOUTUBE URL
+                if (i == 1 && videoId && player1 && player1videoid != videoId) {
+                    player1videoid = videoId;
+                    player1.loadVideoById(videoId);
+                } else if (i == 2 && videoId && player2 && player2videoid != videoId) {
+                    player2videoid = videoId;
+                    player2.loadVideoById(videoId);
+                } else if (i == 3 && videoId && player3 && player3videoid != videoId) {
+                    player3videoid = videoId;
+                    player3.loadVideoById(videoId);
+                } else if (i == 4 && videoId && player4 && player4videoid != videoId) {
+                    player4videoid = videoId;
+                    player4.loadVideoById(videoId);
+                }
+
+                // Change Button text
+                document.getElementById(`btn-focus${i}`).innerText = "Focus " + runnerName;
+                document.getElementById(`btn-tambahhit${i}`).innerText = "Tambah Hit " + runnerName;
+                document.getElementById(`btn-kuranghit${i}`).innerText = "Kurang Hit " + runnerName;
+                document.getElementById(`btn-reload${i}`).innerText = "Reload " + runnerName;
+
+                // MOVEMENT
+                overlay.style.transformOrigin = 'top left';
+
+                // 1️⃣ scale first
+                overlay.style.transform = `scale(${scale})`;
+                overlay.style.zIndex = zIndex;
+
+                // 2️⃣ then move & resize on next frame
+                requestAnimationFrame(() => {
+                    overlay.style.left = `${x}px`;
+                    overlay.style.top = `${y}px`;
+                    overlay.style.width = `${width}px`;
+                    overlay.style.height = `${height}px`;
+                });
+            }
+            const commentator1 = document.getElementById(`commentator1-input`).value;
+            const commentator2 = document.getElementById(`commentator2-input`).value;
+            // Commentator name
+            document.getElementById(`commentator1-name`).innerText = commentator1;
+            document.getElementById(`commentator2-name`).innerText = commentator2;
+
+            const marqueeText = document.getElementById(`marquee-text-input`).value;
+            document.getElementsByClassName(`marquee-text`)[0].innerText = marqueeText;
+        }
+
+        // Reset all overlays to default
+        function resetToNormalState() {
+            document.getElementById(`overlay1-label`).className = "overlay-label-left";
+            document.getElementById(`overlay2-label`).className = "overlay-label";
+            document.getElementById(`overlay3-label`).className = "overlay-label-left";
+            document.getElementById(`overlay4-label`).className = "overlay-label";
+            for (let i = 1; i <= 4; i++) {
+                const overlayId = `overlay${i}`;
+                const config = defaultConfigs[overlayId];
+
+                document.getElementById(`${overlayId}-x`).value = config.x;
+                document.getElementById(`${overlayId}-y`).value = config.y;
+                document.getElementById(`${overlayId}-width`).value = config.width;
+                document.getElementById(`${overlayId}-scale`).value = config.scale;
+                document.getElementById(`${overlayId}-z-index`).value = config.zIndex;
+            }
+            document.getElementsByClassName("logo-image")[0].style.visibility = "visible";
+
+            applyChanges();
+        }
+        // Reset all overlays to default
+        function resetToDefault() {
+
+            for (let i = 1; i <= 4; i++) {
+                const overlayId = `overlay${i}`;
+                const config = defaultConfigs[overlayId];
+
+                document.getElementById(`${overlayId}-x`).value = config.x;
+                document.getElementById(`${overlayId}-y`).value = config.y;
+                document.getElementById(`${overlayId}-width`).value = config.width;
+                document.getElementById(`${overlayId}-scale`).value = config.scale;
+                document.getElementById(`${overlayId}-z-index`).value = config.zIndex;
+            }
+            document.getElementsByClassName("logo-image")[0].style.visibility = "hidden";
+
+            applyChanges();
+        }
+        function resetToFocus1() {
+            document.getElementById(`overlay1-label`).className = "overlay-label-upleft";
+            document.getElementById(`overlay2-label`).className = "overlay-label-left";
+            document.getElementById(`overlay3-label`).className = "overlay-label-left";
+            document.getElementById(`overlay4-label`).className = "overlay-label-left";
+            for (let i = 1; i <= 4; i++) {
+                const overlayId = `overlay${i}`;
+                const config = focus1[overlayId];
+
+                document.getElementById(`${overlayId}-x`).value = config.x;
+                document.getElementById(`${overlayId}-y`).value = config.y;
+                document.getElementById(`${overlayId}-width`).value = config.width;
+                document.getElementById(`${overlayId}-scale`).value = config.scale;
+                document.getElementById(`${overlayId}-z-index`).value = config.zIndex;
+            }
+            document.getElementsByClassName("logo-image")[0].style.visibility = "hidden";
+
+            applyChanges();
+        }
+        function resetToFocus2() {
+            document.getElementById(`overlay1-label`).className = "overlay-label-left";
+            document.getElementById(`overlay2-label`).className = "overlay-label-upleft";
+            document.getElementById(`overlay3-label`).className = "overlay-label-left";
+            document.getElementById(`overlay4-label`).className = "overlay-label-left";
+            for (let i = 1; i <= 4; i++) {
+                const overlayId = `overlay${i}`;
+                const config = focus2[overlayId];
+
+                document.getElementById(`${overlayId}-x`).value = config.x;
+                document.getElementById(`${overlayId}-y`).value = config.y;
+                document.getElementById(`${overlayId}-width`).value = config.width;
+                document.getElementById(`${overlayId}-scale`).value = config.scale;
+                document.getElementById(`${overlayId}-z-index`).value = config.zIndex;
+            }
+            document.getElementsByClassName("logo-image")[0].style.visibility = "hidden";
+
+            applyChanges();
+        }
+        function resetToFocus3() {
+            document.getElementById(`overlay1-label`).className = "overlay-label-left";
+            document.getElementById(`overlay2-label`).className = "overlay-label-left";
+            document.getElementById(`overlay3-label`).className = "overlay-label-upleft";
+            document.getElementById(`overlay4-label`).className = "overlay-label-left";
+            for (let i = 1; i <= 4; i++) {
+                const overlayId = `overlay${i}`;
+                const config = focus3[overlayId];
+
+                document.getElementById(`${overlayId}-x`).value = config.x;
+                document.getElementById(`${overlayId}-y`).value = config.y;
+                document.getElementById(`${overlayId}-width`).value = config.width;
+                document.getElementById(`${overlayId}-scale`).value = config.scale;
+                document.getElementById(`${overlayId}-z-index`).value = config.zIndex;
+            }
+            document.getElementsByClassName("logo-image")[0].style.visibility = "hidden";
+
+            applyChanges();
+        }
+        function resetToFocus4() {
+            document.getElementById(`overlay1-label`).className = "overlay-label-left";
+            document.getElementById(`overlay2-label`).className = "overlay-label-left";
+            document.getElementById(`overlay3-label`).className = "overlay-label-left";
+            document.getElementById(`overlay4-label`).className = "overlay-label-upleft";
+            for (let i = 1; i <= 4; i++) {
+                const overlayId = `overlay${i}`;
+                const config = focus4[overlayId];
+
+                document.getElementById(`${overlayId}-x`).value = config.x;
+                document.getElementById(`${overlayId}-y`).value = config.y;
+                document.getElementById(`${overlayId}-width`).value = config.width;
+                document.getElementById(`${overlayId}-scale`).value = config.scale;
+                document.getElementById(`${overlayId}-z-index`).value = config.zIndex;
+            }
+            document.getElementsByClassName("logo-image")[0].style.visibility = "hidden";
+
+            applyChanges();
+        }
+
+        function tambahhit1() {
+            let hit1 = document.getElementById("hit1").innerText;
+            hit1 = parseInt(hit1) + 1;
+            document.getElementById("hit1").innerText = hit1;
+        }
+        function tambahhit2() {
+            let hit2 = document.getElementById("hit2").innerText;
+            hit2 = parseInt(hit2) + 1;
+            document.getElementById("hit2").innerText = hit2;
+        }
+        function tambahhit3() {
+            let hit3 = document.getElementById("hit3").innerText;
+            hit3 = parseInt(hit3) + 1;
+            document.getElementById("hit3").innerText = hit3;
+        }
+        function tambahhit4() {
+            let hit4 = document.getElementById("hit4").innerText;
+            hit4 = parseInt(hit4) + 1;
+            document.getElementById("hit4").innerText = hit4;
+        }
+        function kuranghit1() {
+            let hit1 = document.getElementById("hit1").innerText;
+            hit1 = parseInt(hit1) - 1;
+            document.getElementById("hit1").innerText = hit1;
+        }
+        function kuranghit2() {
+            let hit2 = document.getElementById("hit2").innerText;
+            hit2 = parseInt(hit2) - 1;
+            document.getElementById("hit2").innerText = hit2;
+        }
+        function kuranghit3() {
+            let hit3 = document.getElementById("hit3").innerText;
+            hit3 = parseInt(hit3) - 1;
+            document.getElementById("hit3").innerText = hit3;
+        }
+        function kuranghit4() {
+            let hit4 = document.getElementById("hit4").innerText;
+            hit4 = parseInt(hit4) - 1;
+            document.getElementById("hit4").innerText = hit4;
+        }
+        function reload1() {
+            player1.loadVideoById(player1videoid);
+        }
+        function reload2() {
+            player2.loadVideoById(player2videoid);
+        }
+        function reload3() {
+            player3.loadVideoById(player3videoid);
+        }
+        function reload4() {
+            player4.loadVideoById(player4videoid);
+        }
+
+        function applyMainLogo() {
+            const fileInput = document.getElementById('main-logo-file');
+            const file = fileInput.files[0];
+            const mainLogo = document.getElementsByClassName("logo-image")[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    mainLogo.src = URL.createObjectURL(file);
+                    mainLogo.style.visibility = "visible";
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert("Please select an image first!");
+            }
+
+        }
+
+        // Initialize overlays with default values
+        window.addEventListener('DOMContentLoaded', () => {
+            applyChanges();
+        });
+    </script>
+</body>
+
+</html>
