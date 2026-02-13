@@ -562,11 +562,17 @@
                 <button id="btn-kuranghit2" class="reset-button" onclick="kuranghit2()">Kurang 2</button>
                 <button id="btn-kuranghit3" class="reset-button" onclick="kuranghit3()">Kurang 3</button>
                 <button id="btn-kuranghit4" class="reset-button" onclick="kuranghit4()">Kurang 4</button>
+                <button id="btn-togglemute1" class="reset-button" onclick="togglemute1()">Toggle Mute 1</button>
+                <button id="btn-togglemute2" class="reset-button" onclick="togglemute2()">Toggle Mute 2</button>
+                <button id="btn-togglemute3" class="reset-button" onclick="togglemute3()">Toggle Mute 3</button>
+                <button id="btn-togglemute4" class="reset-button" onclick="togglemute4()">Toggle Mute 4</button>
                 <button id="btn-reload1" class="reset-button" onclick="reload1()">Reload 1</button>
                 <button id="btn-reload2" class="reset-button" onclick="reload2()">Reload 2</button>
                 <button id="btn-reload3" class="reset-button" onclick="reload3()">Reload 3</button>
                 <button id="btn-reload4" class="reset-button" onclick="reload4()">Reload 4</button>
                 <button class="reset-button" onclick="resetToNormalState()">Normal State</button>
+                <button class="reset-button" onclick="muteall()">Mute All</button>
+                <button class="reset-button" onclick="unmuteall()">Unmute All</button>
 
             </div>
             <div class="controls-grid-large">
@@ -810,6 +816,26 @@
             <div class="apply-button-container">
                 <button class="apply-button" onclick="applyChanges()">Apply Changes</button>
                 <button class="reset-button" onclick="resetToDefault()">Reset All</button>
+                <button class="apply-button" onclick="exportConfiguration()">Export Config</button>
+            </div>
+
+            <!-- Export/Import Configuration Section -->
+            <div id="export-section"
+                style="display: none; margin-top: 20px; padding: 20px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;">
+                <h3 style="color: #fff; margin-bottom: 15px; text-align: center;">Export Configuration</h3>
+                <div style="margin-bottom: 15px;">
+                    <label
+                        style="display: block; font-size: 13px; margin-bottom: 5px; color: #b0b0c0; text-transform: uppercase;">Configuration
+                        URL:</label>
+                    <textarea id="config-url" readonly
+                        style="width: 100%; min-height: 80px; padding: 10px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #ffffff; font-size: 12px; font-family: monospace; resize: vertical;"></textarea>
+                </div>
+                <div style="display: flex; justify-content: center; gap: 10px;">
+                    <button class="apply-button" style="padding: 10px 30px; font-size: 14px;"
+                        onclick="copyConfigURL(event)">Copy URL</button>
+                    <button class="reset-button" style="padding: 10px 30px; font-size: 14px;"
+                        onclick="closeExportSection()">Close</button>
+                </div>
             </div>
         </div>
 
@@ -826,7 +852,74 @@
         let player3videoid = "rRzxEiBLQCA";
         let player4videoid = "rRzxEiBLQCA";
 
+        let playersReady = false;
+        let configLoadedFromURL = false;
+
+        // Update video IDs from URL params BEFORE YouTube API initializes
+        function preloadVideoIdsFromURL() {
+            console.log('=== PRELOAD VIDEO IDS FROM URL ===');
+            const urlParams = new URLSearchParams(window.location.search);
+
+            const extractVideoId = (url) => {
+                if (!url) return null;
+                const match = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?\&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                return match ? match[1] : null;
+            };
+
+            const url1 = urlParams.get('r1y');
+            const url2 = urlParams.get('r2y');
+            const url3 = urlParams.get('r3y');
+            const url4 = urlParams.get('r4y');
+
+            if (url1) {
+                const id = extractVideoId(url1);
+                if (id) {
+                    player1videoid = id;
+                    console.log(`✓ Preloaded Player 1 video ID: ${id}`);
+                }
+            }
+            if (url2) {
+                const id = extractVideoId(url2);
+                if (id) {
+                    player2videoid = id;
+                    console.log(`✓ Preloaded Player 2 video ID: ${id}`);
+                }
+            }
+            if (url3) {
+                const id = extractVideoId(url3);
+                if (id) {
+                    player3videoid = id;
+                    console.log(`✓ Preloaded Player 3 video ID: ${id}`);
+                }
+            }
+            if (url4) {
+                const id = extractVideoId(url4);
+                if (id) {
+                    player4videoid = id;
+                    console.log(`✓ Preloaded Player 4 video ID: ${id}`);
+                }
+            }
+
+            console.log('Video IDs after preload:', {
+                player1videoid,
+                player2videoid,
+                player3videoid,
+                player4videoid
+            });
+        }
+
+        // Preload video IDs immediately
+        preloadVideoIdsFromURL();
+
         function onYouTubeIframeAPIReady() {
+            console.log('=== YOUTUBE API READY ===');
+            console.log('Initializing players with video IDs:', {
+                player1videoid,
+                player2videoid,
+                player3videoid,
+                player4videoid
+            });
+
             player1 = new YT.Player('player-1', {
                 videoId: player1videoid,
                 playerVars: {
@@ -835,7 +928,11 @@
                     playsinline: 1
                 },
                 events: {
-                    onReady: () => player1.playVideo()
+                    onReady: () => {
+                        console.log('Player 1 ready');
+                        player1.playVideo();
+                        checkAllPlayersReady();
+                    }
                 }
             });
             player2 = new YT.Player('player-2', {
@@ -846,7 +943,11 @@
                     playsinline: 1
                 },
                 events: {
-                    onReady: () => player2.playVideo()
+                    onReady: () => {
+                        console.log('Player 2 ready');
+                        player2.playVideo();
+                        checkAllPlayersReady();
+                    }
                 }
             });
             player3 = new YT.Player('player-3', {
@@ -857,7 +958,11 @@
                     playsinline: 1
                 },
                 events: {
-                    onReady: () => player3.playVideo()
+                    onReady: () => {
+                        console.log('Player 3 ready');
+                        player3.playVideo();
+                        checkAllPlayersReady();
+                    }
                 }
             });
             player4 = new YT.Player('player-4', {
@@ -868,9 +973,26 @@
                     playsinline: 1
                 },
                 events: {
-                    onReady: () => player4.playVideo()
+                    onReady: () => {
+                        console.log('Player 4 ready');
+                        player4.playVideo();
+                        checkAllPlayersReady();
+                    }
                 }
             });
+        }
+
+        function checkAllPlayersReady() {
+            if (player1 && player2 && player3 && player4 && !playersReady) {
+                playersReady = true;
+                console.log('✓ All players ready!');
+
+                // If config was loaded from URL before players were ready, apply it now
+                if (configLoadedFromURL) {
+                    console.log('Re-applying configuration after players ready...');
+                    applyChanges();
+                }
+            }
         }
 
     </script>
@@ -929,7 +1051,10 @@
 
         // Apply changes to overlays
         function applyChanges() {
+            console.log('=== APPLY CHANGES START ===');
+
             for (let i = 1; i <= 4; i++) {
+                console.log(`--- Processing Overlay ${i} ---`);
                 const overlayId = `overlay${i}`;
                 const overlay = document.getElementById(overlayId);
 
@@ -941,7 +1066,12 @@
                 const runnerName = document.getElementById(`runner${i}-input`).value;
                 const runnerScore = document.getElementById(`runner${i}-score`).value;
                 const runnerYtUrl = document.getElementById(`runner${i}-youtube-url`).value;
-                const videoId = runnerYtUrl.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1];
+                const videoId = runnerYtUrl.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?\&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1];
+
+                console.log(`Overlay ${i} settings:`, { x, y, width, scale, zIndex });
+                console.log(`Runner ${i}:`, { name: runnerName, score: runnerScore });
+                console.log(`YouTube URL (raw):`, runnerYtUrl);
+                console.log(`Extracted video ID:`, videoId);
 
                 const height = width / (16 / 9);
 
@@ -952,18 +1082,40 @@
                 document.getElementById(`hit${i}`).innerText = runnerScore;
 
                 // RUNNER YOUTUBE URL
+                const playerVar = i === 1 ? 'player1' : i === 2 ? 'player2' : i === 3 ? 'player3' : 'player4';
+                const player = window[playerVar];
+                const currentVideoIdVar = `player${i}videoid`;
+                const currentVideoId = window[currentVideoIdVar];
+
+                console.log(`Player ${i} status:`, {
+                    playerExists: !!player,
+                    currentVideoId: currentVideoId,
+                    newVideoId: videoId,
+                    needsUpdate: currentVideoId !== videoId
+                });
+
                 if (i == 1 && videoId && player1 && player1videoid != videoId) {
+                    console.log(`✓ Loading new video for Player 1: ${videoId}`);
                     player1videoid = videoId;
                     player1.loadVideoById(videoId);
                 } else if (i == 2 && videoId && player2 && player2videoid != videoId) {
+                    console.log(`✓ Loading new video for Player 2: ${videoId}`);
                     player2videoid = videoId;
                     player2.loadVideoById(videoId);
                 } else if (i == 3 && videoId && player3 && player3videoid != videoId) {
+                    console.log(`✓ Loading new video for Player 3: ${videoId}`);
                     player3videoid = videoId;
                     player3.loadVideoById(videoId);
                 } else if (i == 4 && videoId && player4 && player4videoid != videoId) {
+                    console.log(`✓ Loading new video for Player 4: ${videoId}`);
                     player4videoid = videoId;
                     player4.loadVideoById(videoId);
+                } else {
+                    console.log(`✗ Skipped loading video for Player ${i}:`, {
+                        hasVideoId: !!videoId,
+                        playerReady: !!player,
+                        isDifferent: currentVideoId !== videoId
+                    });
                 }
 
                 // Change Button text
@@ -993,12 +1145,18 @@
             document.getElementById(`commentator1-name`).innerText = commentator1;
             document.getElementById(`commentator2-name`).innerText = commentator2;
 
+            console.log('Commentators updated:', { c1: commentator1, c2: commentator2 });
+
             const marqueeText = document.getElementById(`marquee-text-input`).value;
             document.getElementsByClassName(`marquee-text`)[0].innerText = marqueeText;
+
+            console.log('Marquee text updated:', marqueeText);
+            console.log('=== APPLY CHANGES END ===');
         }
 
         // Reset all overlays to default
         function resetToNormalState() {
+            muteall();
             document.getElementById(`overlay1-label`).className = "overlay-label-left";
             document.getElementById(`overlay2-label`).className = "overlay-label";
             document.getElementById(`overlay3-label`).className = "overlay-label-left";
@@ -1019,7 +1177,6 @@
         }
         // Reset all overlays to default
         function resetToDefault() {
-
             for (let i = 1; i <= 4; i++) {
                 const overlayId = `overlay${i}`;
                 const config = defaultConfigs[overlayId];
@@ -1035,6 +1192,8 @@
             applyChanges();
         }
         function resetToFocus1() {
+            muteall();
+            togglemute1();
             document.getElementById(`overlay1-label`).className = "overlay-label-upleft";
             document.getElementById(`overlay2-label`).className = "overlay-label-left";
             document.getElementById(`overlay3-label`).className = "overlay-label-left";
@@ -1054,6 +1213,8 @@
             applyChanges();
         }
         function resetToFocus2() {
+            muteall();
+            togglemute2();
             document.getElementById(`overlay1-label`).className = "overlay-label-left";
             document.getElementById(`overlay2-label`).className = "overlay-label-upleft";
             document.getElementById(`overlay3-label`).className = "overlay-label-left";
@@ -1073,6 +1234,8 @@
             applyChanges();
         }
         function resetToFocus3() {
+            muteall();
+            togglemute3();
             document.getElementById(`overlay1-label`).className = "overlay-label-left";
             document.getElementById(`overlay2-label`).className = "overlay-label-left";
             document.getElementById(`overlay3-label`).className = "overlay-label-upleft";
@@ -1092,6 +1255,8 @@
             applyChanges();
         }
         function resetToFocus4() {
+            muteall();
+            togglemute4();
             document.getElementById(`overlay1-label`).className = "overlay-label-left";
             document.getElementById(`overlay2-label`).className = "overlay-label-left";
             document.getElementById(`overlay3-label`).className = "overlay-label-left";
@@ -1182,8 +1347,267 @@
 
         }
 
+        function togglemute1() {
+            if (player1.isMuted()) {
+                player1.unMute();
+            } else {
+                player1.mute();
+            }
+        }
+        function togglemute2() {
+            if (player2.isMuted()) {
+                player2.unMute();
+            } else {
+                player2.mute();
+            }
+        }
+        function togglemute3() {
+            if (player3.isMuted()) {
+                player3.unMute();
+            } else {
+                player3.mute();
+            }
+        }
+        function togglemute4() {
+            if (player4.isMuted()) {
+                player4.unMute();
+            } else {
+                player4.mute();
+            }
+        }
+        function muteall() {
+            player1.mute();
+            player2.mute();
+            player3.mute();
+            player4.mute();
+        }
+        function unmuteall() {
+            player1.unMute();
+            player2.unMute();
+            player3.unMute();
+            player4.unMute();
+        }
+        // Export configuration to URL parameters
+        function exportConfiguration() {
+            console.log('=== EXPORT CONFIGURATION START ===');
+
+            const config = {
+                // Overlays configuration
+                o1x: document.getElementById('overlay1-x').value,
+                o1y: document.getElementById('overlay1-y').value,
+                o1w: document.getElementById('overlay1-width').value,
+                o1s: document.getElementById('overlay1-scale').value,
+                o1z: document.getElementById('overlay1-z-index').value,
+
+                o2x: document.getElementById('overlay2-x').value,
+                o2y: document.getElementById('overlay2-y').value,
+                o2w: document.getElementById('overlay2-width').value,
+                o2s: document.getElementById('overlay2-scale').value,
+                o2z: document.getElementById('overlay2-z-index').value,
+
+                o3x: document.getElementById('overlay3-x').value,
+                o3y: document.getElementById('overlay3-y').value,
+                o3w: document.getElementById('overlay3-width').value,
+                o3s: document.getElementById('overlay3-scale').value,
+                o3z: document.getElementById('overlay3-z-index').value,
+
+                o4x: document.getElementById('overlay4-x').value,
+                o4y: document.getElementById('overlay4-y').value,
+                o4w: document.getElementById('overlay4-width').value,
+                o4s: document.getElementById('overlay4-scale').value,
+                o4z: document.getElementById('overlay4-z-index').value,
+
+                // Runners information
+                r1n: document.getElementById('runner1-input').value,
+                r1h: document.getElementById('runner1-score').value,
+                r1y: document.getElementById('runner1-youtube-url').value,
+
+                r2n: document.getElementById('runner2-input').value,
+                r2h: document.getElementById('runner2-score').value,
+                r2y: document.getElementById('runner2-youtube-url').value,
+
+                r3n: document.getElementById('runner3-input').value,
+                r3h: document.getElementById('runner3-score').value,
+                r3y: document.getElementById('runner3-youtube-url').value,
+
+                r4n: document.getElementById('runner4-input').value,
+                r4h: document.getElementById('runner4-score').value,
+                r4y: document.getElementById('runner4-youtube-url').value,
+
+                // Commentators
+                c1: document.getElementById('commentator1-input').value,
+                c2: document.getElementById('commentator2-input').value,
+
+                // Marquee text
+                mt: document.getElementById('marquee-text-input').value
+            };
+
+            console.log('Configuration object:', config);
+            console.log('Overlay 1:', { x: config.o1x, y: config.o1y, width: config.o1w, scale: config.o1s, zIndex: config.o1z });
+            console.log('Overlay 2:', { x: config.o2x, y: config.o2y, width: config.o2w, scale: config.o2s, zIndex: config.o2z });
+            console.log('Overlay 3:', { x: config.o3x, y: config.o3y, width: config.o3w, scale: config.o3s, zIndex: config.o3z });
+            console.log('Overlay 4:', { x: config.o4x, y: config.o4y, width: config.o4w, scale: config.o4s, zIndex: config.o4z });
+            console.log('Runner 1:', { name: config.r1n, hits: config.r1h, youtube: config.r1y });
+            console.log('Runner 2:', { name: config.r2n, hits: config.r2h, youtube: config.r2y });
+            console.log('Runner 3:', { name: config.r3n, hits: config.r3h, youtube: config.r3y });
+            console.log('Runner 4:', { name: config.r4n, hits: config.r4h, youtube: config.r4y });
+            console.log('Commentators:', { c1: config.c1, c2: config.c2 });
+            console.log('Marquee:', config.mt);
+
+            // Create URL with GET parameters
+            const params = new URLSearchParams(config);
+            const baseUrl = window.location.origin + window.location.pathname;
+            const configUrl = `${baseUrl}?${params.toString()}`;
+
+            console.log('Generated URL:', configUrl);
+            console.log('URL length:', configUrl.length);
+            console.log('=== EXPORT CONFIGURATION END ===');
+
+            // Display in the export section
+            document.getElementById('config-url').value = configUrl;
+            document.getElementById('export-section').style.display = 'block';
+
+            // Scroll to export section
+            document.getElementById('export-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Copy configuration URL to clipboard
+        function copyConfigURL(event) {
+            console.log('=== COPY URL START ===');
+            const urlTextarea = document.getElementById('config-url');
+            const urlText = urlTextarea.value;
+
+            console.log('URL to copy:', urlText);
+            console.log('URL length:', urlText.length);
+
+            urlTextarea.select();
+            urlTextarea.setSelectionRange(0, 99999); // For mobile devices
+
+            navigator.clipboard.writeText(urlText).then(() => {
+                console.log('✓ URL copied to clipboard successfully');
+                // Visual feedback
+                const button = event.target;
+                const originalText = button.innerText;
+                const originalBg = button.style.backgroundColor;
+
+                button.innerText = 'Copied!';
+                button.style.backgroundColor = '#22c55e';
+
+                setTimeout(() => {
+                    button.innerText = originalText;
+                    button.style.backgroundColor = originalBg;
+                }, 2000);
+                console.log('=== COPY URL END ===');
+            }).catch(err => {
+                console.error('✗ Failed to copy URL:', err);
+                alert('Failed to copy URL: ' + err);
+            });
+        }
+
+        // Close export section
+        function closeExportSection() {
+            document.getElementById('export-section').style.display = 'none';
+        }
+
+        // Load configuration from URL parameters
+        function loadConfigurationFromURL() {
+            console.log('=== LOAD CONFIGURATION FROM URL START ===');
+            const urlParams = new URLSearchParams(window.location.search);
+
+            console.log('Current URL:', window.location.href);
+            console.log('URL search params:', window.location.search);
+            console.log('Total parameters found:', Array.from(urlParams.keys()).length);
+
+            // Check if there are any parameters
+            if (urlParams.toString() === '') {
+                console.log('No configuration parameters found in URL');
+                console.log('=== LOAD CONFIGURATION FROM URL END (EMPTY) ===');
+                return; // No configuration to load
+            }
+
+            configLoadedFromURL = true;  // Set flag to re-apply after players ready
+
+            console.log('Parameters:', Object.fromEntries(urlParams));
+
+            let loadedCount = 0;
+
+            // Load overlay configurations
+            const setValueIfExists = (id, param, label) => {
+                const value = urlParams.get(param);
+                if (value !== null) {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.value = value;
+                        console.log(`✓ Loaded ${label} (${param}): ${value}`);
+                        loadedCount++;
+                    } else {
+                        console.warn(`✗ Element not found: ${id} for ${label}`);
+                    }
+                } else {
+                    console.log(`- Skipped ${label} (${param}): not in URL`);
+                }
+            };
+
+            console.log('--- Loading Overlay 1 ---');
+            setValueIfExists('overlay1-x', 'o1x', 'Overlay 1 X');
+            setValueIfExists('overlay1-y', 'o1y', 'Overlay 1 Y');
+            setValueIfExists('overlay1-width', 'o1w', 'Overlay 1 Width');
+            setValueIfExists('overlay1-scale', 'o1s', 'Overlay 1 Scale');
+            setValueIfExists('overlay1-z-index', 'o1z', 'Overlay 1 Z-Index');
+
+            console.log('--- Loading Overlay 2 ---');
+            setValueIfExists('overlay2-x', 'o2x', 'Overlay 2 X');
+            setValueIfExists('overlay2-y', 'o2y', 'Overlay 2 Y');
+            setValueIfExists('overlay2-width', 'o2w', 'Overlay 2 Width');
+            setValueIfExists('overlay2-scale', 'o2s', 'Overlay 2 Scale');
+            setValueIfExists('overlay2-z-index', 'o2z', 'Overlay 2 Z-Index');
+
+            console.log('--- Loading Overlay 3 ---');
+            setValueIfExists('overlay3-x', 'o3x', 'Overlay 3 X');
+            setValueIfExists('overlay3-y', 'o3y', 'Overlay 3 Y');
+            setValueIfExists('overlay3-width', 'o3w', 'Overlay 3 Width');
+            setValueIfExists('overlay3-scale', 'o3s', 'Overlay 3 Scale');
+            setValueIfExists('overlay3-z-index', 'o3z', 'Overlay 3 Z-Index');
+
+            console.log('--- Loading Overlay 4 ---');
+            setValueIfExists('overlay4-x', 'o4x', 'Overlay 4 X');
+            setValueIfExists('overlay4-y', 'o4y', 'Overlay 4 Y');
+            setValueIfExists('overlay4-width', 'o4w', 'Overlay 4 Width');
+            setValueIfExists('overlay4-scale', 'o4s', 'Overlay 4 Scale');
+            setValueIfExists('overlay4-z-index', 'o4z', 'Overlay 4 Z-Index');
+
+            console.log('--- Loading Runners Information ---');
+            setValueIfExists('runner1-input', 'r1n', 'Runner 1 Name');
+            setValueIfExists('runner1-score', 'r1h', 'Runner 1 Hits');
+            setValueIfExists('runner1-youtube-url', 'r1y', 'Runner 1 YouTube');
+
+            setValueIfExists('runner2-input', 'r2n', 'Runner 2 Name');
+            setValueIfExists('runner2-score', 'r2h', 'Runner 2 Hits');
+            setValueIfExists('runner2-youtube-url', 'r2y', 'Runner 2 YouTube');
+
+            setValueIfExists('runner3-input', 'r3n', 'Runner 3 Name');
+            setValueIfExists('runner3-score', 'r3h', 'Runner 3 Hits');
+            setValueIfExists('runner3-youtube-url', 'r3y', 'Runner 3 YouTube');
+
+            setValueIfExists('runner4-input', 'r4n', 'Runner 4 Name');
+            setValueIfExists('runner4-score', 'r4h', 'Runner 4 Hits');
+            setValueIfExists('runner4-youtube-url', 'r4y', 'Runner 4 YouTube');
+
+            console.log('--- Loading Commentators ---');
+            setValueIfExists('commentator1-input', 'c1', 'Commentator 1');
+            setValueIfExists('commentator2-input', 'c2', 'Commentator 2');
+
+            console.log('--- Loading Marquee ---');
+            setValueIfExists('marquee-text-input', 'mt', 'Marquee Text');
+
+            console.log(`Total values loaded: ${loadedCount}`);
+            console.log('✓ Configuration loaded from URL successfully');
+            console.log('=== LOAD CONFIGURATION FROM URL END ===');
+        }
+
         // Initialize overlays with default values
         window.addEventListener('DOMContentLoaded', () => {
+            loadConfigurationFromURL(); // Load config from URL if present
             applyChanges();
         });
     </script>
