@@ -1081,18 +1081,6 @@
                 document.getElementById(`hit${i}`).innerText = runnerScore;
 
                 // RUNNER YOUTUBE URL
-                const playerVar = i === 1 ? 'player1' : i === 2 ? 'player2' : i === 3 ? 'player3' : 'player4';
-                const player = window[playerVar];
-                const currentVideoIdVar = `player${i}videoid`;
-                const currentVideoId = window[currentVideoIdVar];
-
-                console.log(`Player ${i} status:`, {
-                    playerExists: !!player,
-                    currentVideoId: currentVideoId,
-                    newVideoId: videoId,
-                    needsUpdate: currentVideoId !== videoId
-                });
-
                 if (i == 1 && videoId && player1 && player1videoid != videoId) {
                     console.log(`✓ Loading new video for Player 1: ${videoId}`);
                     player1videoid = videoId;
@@ -1109,12 +1097,6 @@
                     console.log(`✓ Loading new video for Player 4: ${videoId}`);
                     player4videoid = videoId;
                     player4.loadVideoById(videoId);
-                } else {
-                    console.log(`✗ Skipped loading video for Player ${i}:`, {
-                        hasVideoId: !!videoId,
-                        playerReady: !!player,
-                        isDifferent: currentVideoId !== videoId
-                    });
                 }
 
                 // Change Button text
