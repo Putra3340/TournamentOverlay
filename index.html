@@ -847,10 +847,10 @@
         let player3;
         let player4;
 
-        let player1videoid = "rRzxEiBLQCA";
-        let player2videoid = "rRzxEiBLQCA";
-        let player3videoid = "rRzxEiBLQCA";
-        let player4videoid = "rRzxEiBLQCA";
+        let player1videoid = "";
+        let player2videoid = "";
+        let player3videoid = "";
+        let player4videoid = "";
 
         let playersReady = false;
         let configLoadedFromURL = false;
@@ -908,10 +908,8 @@
             });
         }
 
-        // Preload video IDs immediately
-        preloadVideoIdsFromURL();
-
         function onYouTubeIframeAPIReady() {
+            preloadVideoIdsFromURL();
             console.log('=== YOUTUBE API READY ===');
             console.log('Initializing players with video IDs:', {
                 player1videoid,
@@ -1052,7 +1050,6 @@
         // Apply changes to overlays
         function applyChanges() {
             console.log('=== APPLY CHANGES START ===');
-            Thread.Sleep(2000);
             for (let i = 1; i <= 4; i++) {
                 console.log(`--- Processing Overlay ${i} ---`);
                 const overlayId = `overlay${i}`;
