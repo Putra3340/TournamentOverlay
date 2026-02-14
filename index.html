@@ -907,9 +907,8 @@
                 player4videoid
             });
         }
-
+        preloadVideoIdsFromURL();
         function onYouTubeIframeAPIReady() {
-            preloadVideoIdsFromURL();
             console.log('=== YOUTUBE API READY ===');
             console.log('Initializing players with video IDs:', {
                 player1videoid,
