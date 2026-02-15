@@ -106,6 +106,20 @@
             pointer-events: none;
         }
 
+        .overlay-label-upright {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 4px 10px;
+            font-size: 32px;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.65);
+            color: white;
+            border-radius: 6px;
+            z-index: 3;
+            pointer-events: none;
+        }
+
         .overlay:hover {
             border-color: rgba(255, 255, 255, 0.6);
             box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
@@ -566,6 +580,13 @@
                 <button id="btn-togglemute2" class="reset-button" onclick="togglemute2()">Toggle Mute 2</button>
                 <button id="btn-togglemute3" class="reset-button" onclick="togglemute3()">Toggle Mute 3</button>
                 <button id="btn-togglemute4" class="reset-button" onclick="togglemute4()">Toggle Mute 4</button>
+                <button id="btn-pojokkananatas" class="reset-button" onclick="pojokkananatas()">Pojok Kanan
+                    Atas</button>
+                <button id="btn-pojokkiriatas" class="reset-button" onclick="pojokkiriatas()">Pojok Kiri Atas</button>
+                <button id="btn-pojokkananbawah" class="reset-button" onclick="pojokkananbawah()">Pojok Kanan
+                    Bawah</button>
+                <button id="btn-pojokkiribawah" class="reset-button" onclick="pojokkiribawah()">Pojok Kiri
+                    Bawah</button>
                 <button id="btn-reload1" class="reset-button" onclick="reload1()">Reload 1</button>
                 <button id="btn-reload2" class="reset-button" onclick="reload2()">Reload 2</button>
                 <button id="btn-reload3" class="reset-button" onclick="reload3()">Reload 3</button>
@@ -1317,7 +1338,30 @@
         function reload4() {
             player4.loadVideoById(player4videoid);
         }
-
+        function pojokkananatas() {
+            document.getElementById(`overlay1-label`).className = "overlay-label-upright";
+            document.getElementById(`overlay2-label`).className = "overlay-label-upright";
+            document.getElementById(`overlay3-label`).className = "overlay-label-upright";
+            document.getElementById(`overlay4-label`).className = "overlay-label-upright";
+        }
+        function pojokkiriatas() {
+            document.getElementById(`overlay1-label`).className = "overlay-label-upleft";
+            document.getElementById(`overlay2-label`).className = "overlay-label-upleft";
+            document.getElementById(`overlay3-label`).className = "overlay-label-upleft";
+            document.getElementById(`overlay4-label`).className = "overlay-label-upleft";
+        }
+        function pojokkananbawah() {
+            document.getElementById(`overlay1-label`).className = "overlay-label";
+            document.getElementById(`overlay2-label`).className = "overlay-label";
+            document.getElementById(`overlay3-label`).className = "overlay-label";
+            document.getElementById(`overlay4-label`).className = "overlay-label";
+        }
+        function pojokkiribawah() {
+            document.getElementById(`overlay1-label`).className = "overlay-label-left";
+            document.getElementById(`overlay2-label`).className = "overlay-label-left";
+            document.getElementById(`overlay3-label`).className = "overlay-label-left";
+            document.getElementById(`overlay4-label`).className = "overlay-label-left";
+        }
         function applyMainLogo() {
             const fileInput = document.getElementById('main-logo-file');
             const file = fileInput.files[0];
@@ -1599,6 +1643,69 @@
             loadConfigurationFromURL(); // Load config from URL if present
             applyChanges();
         });
+
+        function key1() { resetToFocus1(); }
+        function key1Plus() { tambahhit1(); }
+        function key1Minus() { kuranghit1(); }
+
+        function key2() { resetToFocus2(); }
+        function key2Plus() { tambahhit2(); }
+        function key2Minus() { kuranghit2(); }
+
+        function key3() { resetToFocus3(); }
+        function key3Plus() { tambahhit3(); }
+        function key3Minus() { kuranghit3(); }
+
+        function key4() { resetToFocus4(); }
+        function key4Plus() { tambahhit4(); }
+        function key4Minus() { kuranghit4(); }
+
+        function key5() { resetToNormalState(); }
+
+        function keyW() { pojokkiriatas(); }
+        function keyA() { pojokkiribawah(); }
+        function keyS() { pojokkananbawah(); }
+        function keyD() { pojokkananatas(); }
+
+        const pressed = {};
+
+        document.addEventListener("keydown", function (e) {
+            pressed[e.key.toLowerCase()] = true;
+
+            // 1
+            if (pressed["1"] && pressed["l"]) key1Plus();
+            else if (pressed["1"] && pressed["k"]) key1Minus();
+            else if (e.key === "1") key1();
+
+            // 2
+            if (pressed["2"] && pressed["l"]) key2Plus();
+            else if (pressed["2"] && pressed["k"]) key2Minus();
+            else if (e.key === "2") key2();
+
+            // 3
+            if (pressed["3"] && pressed["l"]) key3Plus();
+            else if (pressed["3"] && pressed["k"]) key3Minus();
+            else if (e.key === "3") key3();
+
+            // 4
+            if (pressed["4"] && pressed["l"]) key4Plus();
+            else if (pressed["4"] && pressed["k"]) key4Minus();
+            else if (e.key === "4") key4();
+
+            // 5
+            if (e.key === "5") key5();
+
+            // WASD
+            if (pressed["w"]) keyW();
+            if (pressed["a"]) keyA();
+            if (pressed["s"]) keyS();
+            if (pressed["d"]) keyD();
+        });
+
+        document.addEventListener("keyup", function (e) {
+            pressed[e.key.toLowerCase()] = false;
+        });
+
     </script>
 </body>
 
